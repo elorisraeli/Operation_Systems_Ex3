@@ -15,15 +15,49 @@
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
-
+#include <time.h>
 
 #define SOCKET_PATH "/tmp/mysocket"
 #define BUFFER_SIZE 1024
-#define FILE_NAME_SEND "file_to_send.txt"
+#define FILE_NAME_SEND "datafile_to_send.dat"
+#define OLD_FILE_NAME_SEND "file_to_send.txt" // same for good memories and working codes
 #define FILE_NAME_RECEIVE "received_file.txt"
 #define EOF_MARKER "<<<EOF>>>"
-
 #define PIPE_NAME "/tmp/my_pipe"
+#define CHUNK_SIZE 104857600 // size in bytes (100 * 1024 * 1024)
+
+void generateFile(const char *filename) {
+    char *data = malloc(CHUNK_SIZE);
+    if (data == NULL) {
+        fprintf(stderr, "Failed to allocate memory.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    FILE *file = fopen(filename, "wb");
+    if (file == NULL) {
+        fprintf(stderr, "Failed to open file.\n");
+        free(data);
+        exit(EXIT_FAILURE);
+    }
+
+    srand(time(NULL));
+    for (int i = 0; i < CHUNK_SIZE; i++) {
+        data[i] = rand() % 256; // generate a random byte
+    }
+
+    size_t written = fwrite(data, 1, CHUNK_SIZE, file);
+    if (written != CHUNK_SIZE) {
+        fprintf(stderr, "Failed to write data.\n");
+        free(data);
+        fclose(file);
+        exit(EXIT_FAILURE);
+    }
+
+    free(data);
+    fclose(file);
+
+    printf("Successfully written %d bytes of data to '%s'.\n", CHUNK_SIZE, filename);
+}
 
 void set_non_blocking(int fd)
 { // this function add the O_NONBLOCK flag to the file descriptor
@@ -1428,6 +1462,8 @@ int main(int argc, char const *argv[])
                 fprintf(stderr, "Usage: %s -c IP PORT -p <param> <type> \n", argv[0]);
                 return 1;
             }
+            generateFile(FILE_NAME_SEND);
+
             write(sockfd, param, BUFFER_SIZE);
             write(sockfd, type, BUFFER_SIZE);
             sleep(0.1);
