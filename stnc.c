@@ -1331,25 +1331,39 @@ int main(int argc, char const *argv[])
     char ipToSend[BUFFER_SIZE];
     char param[BUFFER_SIZE];
     char type[BUFFER_SIZE];
+    int errorClient = 0;
+    int errorServer = 0;
+    int errorPerformance = 0;
+    int errorQuiet = 0;
 
     for (int i = 1; i < argc; i++)
     {
         if (strcmp(argv[i], "-p") == 0)
         {
             performance = 1;
+            errorPerformance++;
         }
         else if (strcmp(argv[i], "-q") == 0)
         {
             quiet_mode = 1;
+            errorQuiet++;
         }
         else if (strcmp(argv[i], "-c") == 0)
         {
             client_mode = 1;
+            errorClient++;
         }
         else if (strcmp(argv[i], "-s") == 0)
         {
             server_mode = 1;
+            errorServer++;
         }
+    }
+
+    if (errorClient > 1 || errorServer > 1 || errorPerformance > 1 || errorQuiet > 1)
+    {
+        fprintf(stderr, "Usage: %s [-c IP | -s] PORT\n", argv[0]);
+        return 1;  
     }
 
     if (client_mode == -1 && server_mode == -1)
@@ -1432,7 +1446,6 @@ int main(int argc, char const *argv[])
                 if ((strcmp(argv[i], "tcp") == 0) || (strcmp(argv[i], "udp") == 0) || (strcmp(argv[i], "dgram") == 0) || (strcmp(argv[i], "stream") == 0))
                 {
                     strcpy(param, argv[i]);
-                    printf("param = %s\n", param);
                 }
                 else if ((strcmp(argv[i], "ipv4") == 0) || (strcmp(argv[i], "ipv6") == 0) || (strcmp(argv[i], "mmap") == 0) || (strcmp(argv[i], "pipe") == 0) || (strcmp(argv[i], "uds") == 0))
                 {
